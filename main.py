@@ -16,7 +16,7 @@ from win32ctypes.pywin32.pywintypes import datetime
 from resources.modules.output import OutputOptions
 from resources.modules.source import Source, UpdateSources
 from resources.modules.stylesheets import tabs
-from resources.modules.utility import load_plot_maps, save_plot_map
+from resources.modules.utility import load_plot_maps, save_plot_map, resource_path
 
 
 def create_saves():
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         # WINDOW DETAILS
         self.setWindowTitle("GRAPH IT - Data Management and Analysis")
-        self.icon = QIcon('resources/images/folder.ico')
+        self.icon = QIcon(resource_path('../images/gear.ico'))
         self.setWindowIcon(self.icon)
         self.resize(1200, 800)
 
@@ -260,14 +260,17 @@ class MainWindow(QMainWindow):
         :param progress: Update thread progress.
         :return: None
         """
+        parent = self
+        if self.plots[self.tabs.currentIndex()].settings.isVisible():
+            parent = self.plots[self.tabs.currentIndex()].settings
         if progress[:7] == 'invalid':
-            QMessageBox.critical(self, "Source Location Invalid",
+            QMessageBox.critical(parent, "Source Location Invalid",
                                  'Data Does Not Have Source Location for\n%s.\n'
                                  'Re-Associate Source in "Manage Data Sources".' % progress[8:],
                                  buttons=QMessageBox.StandardButton.Ok,
                                  defaultButton=QMessageBox.StandardButton.Ok)
         elif progress[:6] == 'failed':
-            QMessageBox.critical(self, "Source Update Failed",
+            QMessageBox.critical(parent, "Source Update Failed",
                                  'Primary Data Source Update Failed for\n%s.\n'
                                  'Verify Data is in Valid .csv or .json format.' % progress[7:],
                                  buttons=QMessageBox.StandardButton.Ok,

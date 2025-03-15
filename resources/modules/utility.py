@@ -62,11 +62,12 @@ def resource_path(relative_path: str) -> str:
     """
     try:
         if getattr(sys, 'frozen', False):
-            base_path = sys._MEIPASS
+            base_path = sys._MEIPASS + '/resources/modules'
         else:
             base_path = path.dirname(path.abspath(__file__))
+            print('test: %s' % __file__)
     except AttributeError:
-        base_path = path.abspath("")
+        base_path = path.abspath("../../")
     return path.join(base_path, relative_path)
 
 def save_data_as_parquet(source_data, source_name):

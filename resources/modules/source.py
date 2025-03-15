@@ -166,7 +166,8 @@ class UpdateSources(QThread):
                     save_data_as_parquet(source_data, source_name)
                 else:
                     failed.append(source_name)
-        self.progress.emit('failed %s' % failed)
+        if failed:
+            self.progress.emit('failed %s' % failed)
         self.progress.emit('1')
         self.finished.emit()
 
