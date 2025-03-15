@@ -65,7 +65,6 @@ def resource_path(relative_path: str) -> str:
             base_path = sys._MEIPASS + '/resources/modules'
         else:
             base_path = path.dirname(path.abspath(__file__))
-            print('test: %s' % __file__)
     except AttributeError:
         base_path = path.abspath("../../")
     return path.join(base_path, relative_path)
