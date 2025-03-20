@@ -24,7 +24,6 @@ def create_saves():
     Checks if auxiliary data storage folders exist,
      and creates them if they don't.
     Creates the applications spec file if it doesn't exist.
-    :return: None
     """
     makedirs('saved/data', exist_ok=True)
     makedirs('saved/plots', exist_ok=True)
@@ -49,17 +48,14 @@ class MainWindow(QMainWindow):
         super().__init__()
         # WINDOW DETAILS
         self.setWindowTitle("GRAPH IT - Data Management and Analysis")
-        self.icon = QIcon(resource_path('../images/gear.ico'))
+        self.icon = QIcon(resource_path('resources/images/gear.ico'))
         self.setWindowIcon(self.icon)
         self.resize(1200, 800)
-
         # SPEC
         with open('saved/spec.json', 'r') as f:
             self.spec = load(f)
-
         # LOAD SOURCES
         self.sources = [source for source in listdir('saved/sources')]
-
         # LOAD PLOTS
         self.plots = [plot for plot in load_plot_maps(self, True)]  # temporary storage of PlotMap objects
 
@@ -71,15 +67,12 @@ class MainWindow(QMainWindow):
             self.update_data_action.setText('Update Data From New Sources')
         if listdir('saved/data'):
             self.update_data_action.setText('Update Data for Session')
-
         # ADD DATA SOURCE WINDOW
         self.source_win = Source(self)
-
         # ADD DATA SOURCE ACTION
         self.add_source_action = QAction('Manage Data Sources', self)
         self.add_source_action.triggered.connect(self.source_win.show)
         self.add_source_action.setShortcut(QKeySequence('Ctrl+s'))
-
         # UPDATE DATA THREAD
         self.sources_updating = False
         self.update_thread = UpdateSources(self)
@@ -91,7 +84,6 @@ class MainWindow(QMainWindow):
         self.create_plot_action = QAction("New Plot", self)
         self.create_plot_action.triggered.connect(self.create_new_plot_map)
         self.create_plot_action.setShortcut(QKeySequence("Ctrl+n"))
-
         # ADD EXISTING OR CREATE NEW PLOT WINDOW
         self.new_plot = False
         self.step = False
@@ -107,22 +99,18 @@ class MainWindow(QMainWindow):
         plot_win_layout.addWidget(self.select_plot)
         plot_win_layout.addWidget(plot_win_button)
         self.load_plot_win.setLayout(plot_win_layout)
-
         # DELETE PLOT ACTION
         self.delete_plot_action = QAction('Delete Plot', self)
         self.delete_plot_action.triggered.connect(self.delete_plot_map)
         self.delete_plot_action.setShortcut(QKeySequence('Ctrl+d'))
-
         # PLOT SETTINGS ACTION
         self.plot_settings_action = QAction('Plot Settings', self)
         self.plot_settings_action.triggered.connect(self.plot_settings)
         self.plot_settings_action.setShortcut(QKeySequence("Ctrl+o"))
-
         # OUTPUT PLOT ACTION
         self.output_action = QAction('Output', self)
         self.output_action.triggered.connect(self.output_options)
         self.output_action.setShortcut(QKeySequence("Ctrl+p"))
-
         # PLOT TABS
         self.removed_tabs = []
         self.tabs = QTabWidget(tabPosition=QTabWidget.TabPosition.West,
@@ -134,14 +122,12 @@ class MainWindow(QMainWindow):
         self.tabs.setStyleSheet(tabs)
         self.tabs.currentChanged.connect(self.changeEvent)
         self.tabs.tabCloseRequested.connect(self.closeEvent)
-
         # PRINT PLOT OPTIONS WINDOW
         self.output_win = OutputOptions(self)
 
         # PROGRESS BAR
         self.prog_val = QSlider()
         self.progress = None
-
         # POPULATE TABS
         for p in self.plots:
             self.tabs.addTab(p, 'PLOT %s' % p.plot_map['id'])
@@ -155,7 +141,6 @@ class MainWindow(QMainWindow):
         file_menu.addAction(self.delete_plot_action)
         file_menu.addAction(self.plot_settings_action)
         file_menu.addAction(self.output_action)
-
         # TOOLBAR
         self.toolbar = QToolBar("My main toolbar")
         self.addToolBar(self.toolbar)
@@ -171,7 +156,6 @@ class MainWindow(QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.output_action)
         self.toolbar.addSeparator()
-
         # SET LAYOUT
         layout = QGridLayout()
         layout.addWidget(self.tabs)
@@ -182,7 +166,6 @@ class MainWindow(QMainWindow):
         Catches if a tab is closed and stores it when closing.
         Closes the PlotMap settings window if it is open when application is closed.
         :param event: PyQt close event.
-        :return: None
         """
         if isinstance(event, int):
             index = event
@@ -196,7 +179,6 @@ class MainWindow(QMainWindow):
         """
         current tab changed
         :param index: current tab index
-        :return: None
         """
         if isinstance(index, int):
             if [True for s in self.plots if s.settings.isVisible()]:
@@ -207,7 +189,6 @@ class MainWindow(QMainWindow):
     def plot_settings(self):
         """
         Opens the settings window associated with the current PlotMap instance shown.
-        :return: None
         """
         if self.tabs:
             if not self.plots[self.tabs.currentIndex()].settings.isVisible():
@@ -219,7 +200,6 @@ class MainWindow(QMainWindow):
     def output_options(self):
         """
         Opens the output window.
-        :return: None
         """
         if self.plots:
             self.output_win.output_name.setText(self.select_plot.currentText())
@@ -231,7 +211,6 @@ class MainWindow(QMainWindow):
         """
         Open notification that there isn't a plot map,
          and creates a new instance of one.
-        :return: None
         """
         QMessageBox.information(self, "No Plot Loaded", "New Plot Will be created.",
                                 buttons=QMessageBox.StandardButton.Ok,
@@ -242,10 +221,9 @@ class MainWindow(QMainWindow):
         """
         Initializes and displays the update progress bar.
         Starts the update primary sources thread.
-        :return: None
         """
         self.progress = QProgressBar(self)
-        self.prog_val.setValue(14 + len(listdir('saved/sources')))
+        self.prog_val.setValue(14 + (len(listdir('saved/sources')) * 2) + 5)
         self.prog_val.valueChanged.connect(self.progress.setValue)
         self.progress.setRange(self.prog_val.value(), self.prog_val.value() + self.prog_val.value())
         self.toolbar.addWidget(self.progress)
@@ -258,10 +236,9 @@ class MainWindow(QMainWindow):
         Opens a warning window if there is an issue found,
          with any of the primary source data attributes.
         :param progress: Update thread progress.
-        :return: None
         """
         parent = self
-        if self.plots[self.tabs.currentIndex()].settings.isVisible():
+        if self.plots and self.plots[self.tabs.currentIndex()].settings.isVisible():
             parent = self.plots[self.tabs.currentIndex()].settings
         if progress[:7] == 'invalid':
             QMessageBox.critical(parent, "Source Location Invalid",
@@ -272,7 +249,8 @@ class MainWindow(QMainWindow):
         elif progress[:6] == 'failed':
             QMessageBox.critical(parent, "Source Update Failed",
                                  'Primary Data Source Update Failed for\n%s.\n'
-                                 'Verify Data is in Valid .csv or .json format.' % progress[7:],
+                                 'Verify Data is in Valid Format.\n'
+                                 '( .csv, .json, .xls(*) )' % progress[7:],
                                  buttons=QMessageBox.StandardButton.Ok,
                                  defaultButton=QMessageBox.StandardButton.Ok)
         else:
@@ -283,7 +261,6 @@ class MainWindow(QMainWindow):
         Called after primary source data is updated,
          and updates all existing plot maps with new data.
         Re-initializes the update thread object.
-        :return: None
         """
         self.prog_val.setValue(self.prog_val.value() + 1)
         if self.plots:
@@ -306,7 +283,6 @@ class MainWindow(QMainWindow):
         Checks if any PlotMap objects have been closed,
          opens window to give the option to re-open one,
          or to create a new instance and new tab.
-        :return: None
         """
         if self.new_plot:
             new_plot = load_plot_maps(self, False)[0]
@@ -325,7 +301,6 @@ class MainWindow(QMainWindow):
     def get_new_plot(self):
         """
         Create a new PlotMap instance.
-        :return: None
         """
         self.new_plot = True
         self.create_new_plot_map()
@@ -336,7 +311,6 @@ class MainWindow(QMainWindow):
         """
         Re-opens an existing PlotMap that was previously closed.
         :param box_id: Index of closed PlotMap objects list.
-        :return: None
         """
         if self.step and box_id > 0:
             self.step = False
@@ -355,7 +329,6 @@ class MainWindow(QMainWindow):
         """
         Verify user wants to delete the given plot map.
         Removes plot map JSON file and tab from system.
-        :return: None
         """
         index = self.tabs.currentIndex()
         if index >= 0:

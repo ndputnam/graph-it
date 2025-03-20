@@ -24,7 +24,6 @@ class Formater(QWidget):
         formated_df_name_label = QLabel('Formated Data Title:')
         self.formated_data_name = QLineEdit('Set Name')
 
-
         # MERGE SELECTOR
         self.df_merge_selector = QComboBox()
         self.df_merge_selector.setStyleSheet(combobox)
@@ -94,7 +93,6 @@ class Formater(QWidget):
         """
         Update save formated data button to indicate
          if formated data has be changed or saved.
-        :return: None
         """
         if self.settings.data.formated_data is not None:
             if self.settings.data.formated_data.equals(self.last_formated_data):
@@ -106,7 +104,6 @@ class Formater(QWidget):
         """
         Reimplements the preview window with new data,
          if the preview window is already open.
-        :return: None
         """
         if self.settings.preview.isVisible():
             self.settings.open_preview_table()
@@ -114,7 +111,6 @@ class Formater(QWidget):
     def update_range_selector(self):
         """
         Set range selector range based on size of formated data.
-        :return: None
         """
         if isinstance(self.settings.data.formated_data, DataFrame):
             index = self.settings.data.formated_data.index
@@ -127,7 +123,6 @@ class Formater(QWidget):
         """
         Establish valid formated data from plot map data,
          if data is a Pandas Dataframe.
-        :return: None
         """
         if self.settings.plot_map['data'] is not None and isinstance(self.settings.plot_map['data'], DataFrame):
             self.settings.data.formated_data = deepcopy(self.settings.plot_map['data'])
@@ -142,7 +137,6 @@ class Formater(QWidget):
     def set_format_range(self):
         """
         Applies defined range from range selector to formated data.
-        :return: None
         """
         if self.settings.data.formated_data is None:
             self.alert_invalid()
@@ -157,7 +151,6 @@ class Formater(QWidget):
     def format_range(self):
         """
         Update range button with range selector value.
-        :return: None
         """
         self.set_range_button.setText('Apply %s Limit' % (self.range_selector.value()))
 
@@ -166,7 +159,6 @@ class Formater(QWidget):
         Update sort by button with coord selector value.
         Update set range button with range selector value and coord selector value.
         :param text: Coord selector value, coordinate names from plot map coordinates.
-        :return: None
         """
         self.sort_by_button.setText('Sort by %s Column' % text)
         self.set_range_button.setText('Apply %s Limit to %s' % (self.range_selector.value(), text))
@@ -174,7 +166,6 @@ class Formater(QWidget):
     def sort_by(self):
         """
         Sort formated dataframe by column defined with coord selector.
-        :return: None
         """
         if self.settings.data.formated_data is None:
             self.alert_invalid()
@@ -186,7 +177,6 @@ class Formater(QWidget):
     def add_index(self):
         """
         Add and indexed column to formated Dataframe.
-        :return: None
         """
         if self.settings.data.formated_data is None:
             self.alert_invalid()
@@ -201,7 +191,6 @@ class Formater(QWidget):
     def remove_index(self):
         """
         Remove an existing indexed column from formated Dataframe.
-        :return: None
         """
         if self.settings.data.formated_data is None:
             self.alert_invalid()
@@ -214,7 +203,6 @@ class Formater(QWidget):
     def alert_invalid(self):
         """
         Notify if formated data doesn't exist.
-        :return: None
         """
         QMessageBox.information(self.settings, "Invalid Data Source", "Can Only Format Unstructured Data",
                                 buttons=QMessageBox.StandardButton.Ok,
@@ -224,7 +212,6 @@ class Formater(QWidget):
         """
         Set index of source data to be merged.
         :param index:  Index of data in Data pqt_sources.
-        :return: None
         """
         if index > 0:
             self.merge_index = index
@@ -236,7 +223,6 @@ class Formater(QWidget):
         Need: Dataframe to merge,
               column to merge on,
               column must exist in both Dataframes.
-        :return: None
         """
         if self.merge_index > 0:
             if self.format_coord_selector.currentIndex() > 0:
@@ -275,7 +261,6 @@ class Formater(QWidget):
         """
         Merge a second Pandas Dataframe with the formated Dataframe.
         :param df2: secondary Dataframe.
-        :return: None
         """
         on_column = self.format_coord_selector.currentText()
         merged_data = self.settings.data.merge_dfs(self.settings.plot_map['data'], df2, on_column)

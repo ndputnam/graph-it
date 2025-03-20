@@ -4,8 +4,8 @@ from typing import Union
 import numpy as np
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QColor
-from PyQt6.QtWidgets import (QLabel, QLineEdit, QComboBox, QPushButton, QGridLayout,
-                             QWidget, QDial, QFrame, QMessageBox, QVBoxLayout, QTableView, QDialog)
+from PyQt6.QtWidgets import (QLabel, QLineEdit, QComboBox, QPushButton, QGridLayout,QWidget, QDial,
+                             QFrame, QMessageBox, QVBoxLayout, QTableView, QDialog, QCheckBox, QSlider)
 from pandas import DataFrame
 
 from resources.modules.data import Data
@@ -36,7 +36,7 @@ class Settings(QWidget):
         # WIDOW DETAILS
         self.setWindowTitle('%s SETTINGS | ID: %s' % (self.plot_map['title'], self.plot_map['id']))
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-        self.setWindowIcon(QIcon(resource_path('../images/gear.ico')))
+        self.setWindowIcon(QIcon(resource_path('resources/images/gear.ico')))
         self.resize(200, 200)
 
         # UPPER LEFT QUAD
@@ -95,14 +95,44 @@ class Settings(QWidget):
         plot_name_selector_label = QLabel('Select Plot:')
         self.plot_name_selector = QComboBox()
         self.plot_name_selector.setStyleSheet(combobox)
-        self.plot_name_selector.currentTextChanged.connect(self.set_plot_name)
+        self.plot_name_selector.currentTextChanged.connect(self.set_graph_name)
+        # X GRID
+        self.x_grid = QCheckBox('X-Grid Visible' if self.plot_map['x_grid'] else 'X-Grid Hidden')
+        self.x_grid.stateChanged.connect(self.swap_x_grid)
+        # Y GRID
+        self.y_grid = QCheckBox('Y-Grid Visible' if self.plot_map['y_grid'] else 'Y-Grid Hidden')
+        self.y_grid.stateChanged.connect(self.swap_y_grid)
         # PLOT RESOLUTION
-        self.set_dpi_label = QLabel('Set Plot DPI: %s' % self.plot_map['dpi'])
-        self.set_dpi = QDial()
-        self.set_dpi.setRange(10, 500)
-        self.set_dpi.setValue(int(self.plot_map['dpi']))
-        self.set_dpi.valueChanged.connect(self.set_plot_dpi)
-        self.set_dpi.mouseReleaseEvent = self.mouseReleaseEvent
+        self.dpi_label = QLabel('Set Plot DPI: %s' % self.plot_map['dpi'])
+        self.dpi = QDial()
+        self.dpi.setRange(10, 500)
+        self.dpi.setValue(int(self.plot_map['dpi']))
+        self.dpi.valueChanged.connect(self.set_dpi)
+        self.dpi.mouseReleaseEvent = self.mouseReleaseEvent
+        # FIT TO DISPLAY
+        self.fit_display = QCheckBox('Plot Fits To Display' if self.plot_map['fit'] else 'Plot Expandable')
+        self.fit_display.stateChanged.connect(self.swap_fit)
+        # LABEL EVERY PLOT POINT
+        self.label_all = QCheckBox('All Point Labels' if self.plot_map['label_all'] else 'Minimal Point Labels')
+        self.label_all.stateChanged.connect(self.swap_label_all)
+        # STRETCH HORIZONTAL
+        h_value = self.plot_map['horz_stretch']
+        self.horz_stretch_label = QLabel('Horz Stretch: %s' % (h_value / 10) if h_value > 0 else 'Auto-Scaling')
+        self.horz_stretch = QSlider(Qt.Orientation.Horizontal)
+        self.horz_stretch.setRange(0, 100)
+        self.horz_stretch.setTickInterval(1)
+        # self.horz_stretch.setValue(-1)
+        self.horz_stretch.valueChanged.connect(self.set_horz_stretch)
+        self.horz_stretch.mouseReleaseEvent = self.mouseReleaseEvent
+        # STRETCH VERTICAL
+        v_value = self.plot_map['vert_stretch']
+        self.vert_stretch_label = QLabel('Vert Stretch:   %s' % (v_value / 10) if v_value > 0 else 'Auto-Scaling')
+        self.vert_stretch = QSlider(Qt.Orientation.Horizontal)
+        self.vert_stretch.setRange(0, 100)
+        self.vert_stretch.setTickInterval(1)
+        # self.vert_stretch.setValue(-1)
+        self.vert_stretch.valueChanged.connect(self.set_vert_stretch)
+        self.vert_stretch.mouseReleaseEvent = self.mouseReleaseEvent
 
         # RIGHT QUAD
         # FORMATER
@@ -157,8 +187,16 @@ class Settings(QWidget):
         lower_left_layout.addWidget(self.y_coord_selector, 2, 1)
         lower_left_layout.addWidget(self.z_coord_selector_label, 3, 0)
         lower_left_layout.addWidget(self.z_coord_selector, 3, 1)
-        lower_left_layout.addWidget(self.set_dpi_label, 4, 0)
-        lower_left_layout.addWidget(self.set_dpi, 4, 1)
+        lower_left_layout.addWidget(self.x_grid, 4, 0)
+        lower_left_layout.addWidget(self.y_grid, 4, 1)
+        lower_left_layout.addWidget(self.dpi_label, 5, 0)
+        lower_left_layout.addWidget(self.fit_display, 6, 0)
+        lower_left_layout.addWidget(self.label_all, 7, 0)
+        lower_left_layout.addWidget(self.dpi, 5, 1, 3, 1)
+        lower_left_layout.addWidget(self.horz_stretch_label, 8, 0)
+        lower_left_layout.addWidget(self.horz_stretch, 8, 1)
+        lower_left_layout.addWidget(self.vert_stretch_label, 9, 0)
+        lower_left_layout.addWidget(self.vert_stretch, 9, 1)
         lower_left_frame.setLayout(lower_left_layout)
 
         # RIGHT FRAME
@@ -197,7 +235,6 @@ class Settings(QWidget):
          and saves the current plot map.
         Closes the preview window manually if it is open.
         :param event: PyQt close event.
-        :return: None
         """
         self.setWindowTitle(' < < < [ SAVING: %s ] > > > ' % self.plot_map['data_name'])
         if self.preview.isVisible():
@@ -209,21 +246,25 @@ class Settings(QWidget):
         Catches when the settings window is opened,
          and resets the title bar to its default values.
         :param event: PyQt show event.
-        :return: None
         """
         self.setWindowTitle('%s SETTINGS | ID: %s' % (self.plot_map['title'], self.plot_map['id']))
 
     def mouseReleaseEvent(self, event):
         """
-        Catches a mouse release event when changing the dpi,
-         if dpi has been changed, re-renders the plot with the new dpi.
-        Set dpi mouse release event is manually connected to this.
+        Catches a mouse release event,
+         when changing the dpi or stretch values.
+        If value has been changed, re-renders the plot.
         :param event: PyQt mouse release event.
-        :return: None
         """
-        if self.set_dpi.value() != self.plot_map['dpi']:
-            self.plot_map['dpi'] = self.set_dpi.value()
-            self.plot_map_obj.plot_canvas.change_dpi()
+        if self.dpi.value() != self.plot_map['dpi']:
+            self.plot_map['dpi'] = self.dpi.value()
+            self.plot_map_obj.plot_canvas.run()
+        if self.horz_stretch.value() != self.plot_map['horz_stretch']:
+            self.plot_map['horz_stretch'] = self.horz_stretch.value()
+            self.plot_map_obj.plot_canvas.run()
+        if self.vert_stretch.value() != self.plot_map['vert_stretch']:
+            self.plot_map['vert_stretch'] = self.vert_stretch.value()
+            self.plot_map_obj.plot_canvas.run()
 
     def set_config(self):
         """
@@ -231,9 +272,9 @@ class Settings(QWidget):
         Re-enables the main window after initialized,
          to avoid crashes from overloading.
         Renders a plot if all necessary parameters are set.
-        :return: None
         """
         self.update_combo_boxes()
+        self.update_fit()
         self.plot_map_obj.main_win.setDisabled(False)
         if self.plot_map_obj.validate_data():
             self.plot_map_obj.run_plot()
@@ -244,7 +285,6 @@ class Settings(QWidget):
         """
         Resets PlotMap table with current plot map data.
         Resets Formater data with current plot map data.
-        :return: None
         """
         self.plot_map_obj.table_model = TableModel(self.plot_map['data'])
         self.plot_map_obj.table_data.setModel(self.plot_map_obj.table_model)
@@ -270,7 +310,6 @@ class Settings(QWidget):
         Updates plot name selector, applying plot map coords as appropriate.
         Updates coord selectors.
         Set the current plot map parameters to the PlotMap settings window.
-        :return: None
         """
         self.combo_boxes_updated = False
         avail_data = self.data.update_dict()
@@ -288,7 +327,6 @@ class Settings(QWidget):
         """
         Clears data selector.
         Reloads data selector with current avail data
-        :return: None
         """
         self.data_selector.clear()
         self.avail_data[0] = 'SELECT DATA SOURCE'
@@ -298,7 +336,6 @@ class Settings(QWidget):
         """
         Clears delete selector.
         Reloads delete selector with current avail data
-        :return: None
         """
         self.data_delete_selector.clear()
         self.avail_data[0] = 'Select Data'
@@ -308,7 +345,6 @@ class Settings(QWidget):
         """
         Clears Formater merge selector.
         Reloads Formater merge selector with current avail data
-        :return: None
         """
         self.formater.df_merge_selector.clear()
         self.avail_data[0] = 'Add Data'
@@ -321,7 +357,6 @@ class Settings(QWidget):
          using the data name saved in the plot map.
         Reloads the plot name selector with the appropriate,
          graph names that the plot map data can be applied to.
-        :return: None
         """
         self.plot_name_selector.clear()
         plot_names = []
@@ -342,7 +377,6 @@ class Settings(QWidget):
         Obtains all column names from the current data saved in the plot map.
         Reloads all settings window coordinate selectors,
          with the current applicable column names.
-        :return: None
         """
         self.x_coord_selector.clear()
         self.y_coord_selector.clear()
@@ -363,7 +397,7 @@ class Settings(QWidget):
         Gets the necessary coordinates to show in the settings window,
          from the PLOT_TYPES dict specification
          of the save graph name in the plot map.
-        :return: Makes calls to show_x, show_y, show_z as required.
+        Makes calls to show_x, show_y, show_z as required.
         """
         defined = {'x': self.show_x, 'y': self.show_y, 'z': self.show_z}
         required_vars = ()
@@ -376,7 +410,6 @@ class Settings(QWidget):
         Show or Hide x-coord selector,
          based on plot requirements of the graph name.
         :param show: True if required for given plot.
-        :return: None
         """
         if show:
             self.x_coord_selector_label.setText('X Coordinate:')
@@ -390,7 +423,6 @@ class Settings(QWidget):
         Show or Hide y-coord selector,
          based on plot requirements of the graph name.
         :param show: True if required for given plot.
-        :return: None
         """
         if show:
             self.y_coord_selector_label.setText('Y Coordinate:')
@@ -404,7 +436,6 @@ class Settings(QWidget):
         Show or Hide z-coord selector,
          based on plot requirements of the graph name.
         :param show: True if required for given plot.
-        :return: None
         """
         if show:
             self.z_coord_selector_label.setText('Z Coordinate:')
@@ -416,19 +447,25 @@ class Settings(QWidget):
     def set_plot_map(self):
         """
         Apply plot map values to settings menu options.
-        :return: None
         """
         self.plot_map_title.setText(self.plot_map['title'])
         self.color_selector.setCurrentIndex(self.color_selector.findText(self.plot_map['color']))
         if self.plot_map['data_name']:
             self.data_selector.setCurrentIndex(self.data_selector.findText(self.plot_map['data_name']))
         self.plot_name_selector.setCurrentText(self.plot_map['graph_name'])
+        self.x_grid.setCheckState(Qt.CheckState.Checked if self.plot_map['x_grid'] else Qt.CheckState.Unchecked)
+        self.y_grid.setCheckState(Qt.CheckState.Checked if self.plot_map['y_grid'] else Qt.CheckState.Unchecked)
+        self.dpi.setValue(self.plot_map['dpi'])
+        self.fit_display.setCheckState(Qt.CheckState.Unchecked if self.plot_map['fit'] else Qt.CheckState.Checked)
+        self.label_all.setCheckState(Qt.CheckState.Checked if self.plot_map['label_all'] else Qt.CheckState.Unchecked)
+        self.horz_stretch.setValue(self.plot_map['horz_stretch'])
+        self.vert_stretch.setValue(self.plot_map['vert_stretch'])
+
 
     def set_title(self, title: str):
         """
         Applies a title to this instance of a plot map.
         :param title: User input value.
-        :return: None
         """
         self.plot_map['title'] = title
         self.setWindowTitle('%s SETTINGS | ID: %s' % (self.plot_map['title'], self.plot_map['id']))
@@ -438,7 +475,6 @@ class Settings(QWidget):
         Applies new background color to plot map.
         Sets background color for PlotMap.
         :param index: index of name of color in color selector.
-        :return: None
         """
         self.plot_map['color'] = self.colors[index]
         self.color_selector.setStyleSheet("QComboBox::editable"
@@ -455,7 +491,6 @@ class Settings(QWidget):
          if selected data is not identical to existing and combo boxes are not being updated.
         Resets data to None if none are selected in data selector.
         :param index: data selector option index value derived from Data pqt_sources.
-        :return: None
         """
         if index > 0:
             if self.combo_boxes_updated:
@@ -491,7 +526,6 @@ class Settings(QWidget):
         Clears plot map and sets new data or None from df selector.
         :param data: Pandas Dataframe or dictionary of Numpy arrays.
         :param name: Name of new data
-        :return: None
         """
         self.plot_map['data'] = data
         self.plot_map['data_name'] = name
@@ -505,7 +539,6 @@ class Settings(QWidget):
         Sets X coordinate from x-coord selector.
         Updates x-coord selector label with the size of the plot map column.
         :param index: index of x-coord selector
-        :return: None
         """
         if self.combo_boxes_updated:
             self.plot_map['x_coord'] = self.x_coord_selector.currentText() if index > 0 else ''
@@ -518,7 +551,6 @@ class Settings(QWidget):
         Sets Y coordinate from y-coord selector.
         Updates y-coord selector label with the size of the plot map column.
         :param index: index of y-coord selector
-        :return: None
         """
         if self.combo_boxes_updated:
             self.plot_map['y_coord'] = self.y_coord_selector.currentText() if index > 0 else ''
@@ -531,7 +563,6 @@ class Settings(QWidget):
         Sets Z coordinate from z-coord selector.
         Updates z-coord selector label with the size of the plot map column.
         :param index: index of z-coord selector
-        :return: None
         """
         if self.combo_boxes_updated:
             self.plot_map['z_coord'] = self.z_coord_selector.currentText() if index > 0 else ''
@@ -539,17 +570,16 @@ class Settings(QWidget):
             if info:
                 self.z_coord_selector_label.setText('Z Coordinate: %s' % info)
 
-    def set_plot_name(self, text:str):
+    def set_graph_name(self, text:str):
         """
         Applies graph name to the plot map.
         Sets coordinate selectors.
         :param text: Graph name from plot name selector.
-        :return: None
         """
         if text:
             if self.combo_boxes_updated and text != 'SELECT PLOT':
                 self.plot_map['graph_name'] = text
-                self.update_coord_selectors()
+                self.show_coord_selectors()
             self.apply_coords()
         else:
             self.plot_name_selector.setCurrentIndex(0)
@@ -559,7 +589,6 @@ class Settings(QWidget):
         Sets coordinate values from plot map coords,
          based on the graph name prefix.
         If isometric, set the values specifically.
-        :return: None
         """
         if self.plot_map['graph_name'][:3] in ['Iso', 'Tri']:
             self.x_coord_selector.setCurrentIndex(1)
@@ -570,23 +599,98 @@ class Settings(QWidget):
             self.y_coord_selector.setCurrentText(self.plot_map['y_coord'])
             self.z_coord_selector.setCurrentText(self.plot_map['z_coord'])
 
-    def set_plot_dpi(self, dpi:int):
+    def swap_x_grid(self):
+        """
+        Turn on and off horizontal grid bars.
+        """
+        if self.combo_boxes_updated:
+            self.plot_map['x_grid'] = not self.plot_map['x_grid']
+            self.plot_map_obj.plot_canvas.run()
+        self.x_grid.setText('X-Grid Visible' if self.plot_map['x_grid'] else 'X-Grid Hidden')
+
+    def swap_y_grid(self):
+        """
+        Turn on and off vertical grid bars
+        """
+        if self.combo_boxes_updated:
+            self.plot_map['y_grid'] = not self.plot_map['y_grid']
+            self.plot_map_obj.plot_canvas.run()
+        self.y_grid.setText('Y-Grid Visible' if self.plot_map['y_grid'] else 'Y-Grid Hidden')
+
+    def set_dpi(self, dpi:int):
         """
         Defines plot DPI, self adjusts to nearest ten value.
-        Uses call to mouseReleaseEvent to update RenderPlot.
+        Uses call to mouseReleaseEvent to update RenderPlot and set value to plot map.
         :param dpi: DPI value to apply to rendered plot.
-        :return: None
         """
         dpi = int(dpi - (dpi % 10))
-        self.set_dpi_label.setText('Set Plot DPI: %s' % dpi)
-        self.set_dpi.setValue(dpi)
+        self.dpi_label.setText('Set Plot DPI: %s' % dpi)
+        self.dpi.setValue(dpi)
+        self.plot_map_obj.run_plot_button.setText(' < < < RENDERING PLOT > > > ')
+
+    def swap_fit(self):
+        """
+        Defines how the graph is to be drawn,
+         within the confines of the display,
+         or expanded to full size with scrolling.
+        """
+        if self.combo_boxes_updated:
+            self.plot_map['fit'] = not self.plot_map['fit']
+            self.plot_map_obj.plot_canvas.run()
+        self.update_fit()
+
+    def update_fit(self):
+        """
+        Displays or hides the plot size modifier selectors,
+         shown if it is not fit to plot display.
+        """
+        if self.plot_map['fit']:
+            self.fit_display.setText('Plot Fits To Display')
+            self.label_all.hide()
+            self.horz_stretch_label.hide()
+            self.horz_stretch.hide()
+            self.vert_stretch_label.hide()
+            self.vert_stretch.hide()
+        else:
+            self.fit_display.setText('Plot Expandable')
+            self.label_all.show()
+            self.horz_stretch_label.show()
+            self.horz_stretch.show()
+            self.vert_stretch_label.show()
+            self.vert_stretch.show()
+
+    def swap_label_all(self):
+        """
+        Sets if to label all data points on plot,
+         or to only label the minimum necessary.
+        """
+        if self.combo_boxes_updated:
+            self.plot_map['label_all'] = not self.plot_map['label_all']
+            self.plot_map_obj.plot_canvas.run()
+        self.label_all.setText('All Point Labels' if self.plot_map['label_all'] else 'Minimal Point Labels')
+
+    def set_horz_stretch(self, value):
+        """
+        Defines plot width when it is not fit to plot display.
+        Uses call to mouseReleaseEvent to update RenderPlot and set value to plot map.
+        :param value: Multiplier applied to current plot display width.
+        """
+        self.horz_stretch_label.setText('Horz Stretch: %s' % (value / 10) if value > 0 else 'Auto-Scaling')
+        self.plot_map_obj.run_plot_button.setText(' < < < RENDERING PLOT > > > ')
+
+    def set_vert_stretch(self, value):
+        """
+        Defines plot height when it is not fit to plot display.
+        Uses call to mouseReleaseEvent to update RenderPlot and set value to plot map.
+        :param value: Multiplier applied to current plot display height.
+        """
+        self.vert_stretch_label.setText('Vert Stretch:   %s' % (value / 10) if value > 0 else 'Auto-Scaling')
         self.plot_map_obj.run_plot_button.setText(' < < < RENDERING PLOT > > > ')
 
     def open_preview_table(self):
         """
         Creates and opens a window to preview changes made to formated data,
          if formated data exists.
-        :return: None
         """
         if self.data.formated_data is not None:
             self.preview.setWindowTitle('Preview for Formated %s' % self.formater.formated_data_name.text())
@@ -603,7 +707,6 @@ class Settings(QWidget):
     def save_formated(self):
         """
         Save formated data from Formater, from Data.
-        :return: None
         """
         name = self.formater.formated_data_name.text()
         if name not in ['', 'Set Name'] and self.data.formated_data is not None:
@@ -629,7 +732,6 @@ class Settings(QWidget):
         """
         Save current plot map.
         :param run_plot: Whether to render a plot after saving
-        :return: None
         """
         from resources.modules.utility import save_plot_map
         self.plot_map_obj.update_data(self.plot_map)
@@ -641,7 +743,6 @@ class Settings(QWidget):
         """
         Update delete button with data parquet to remove.
         :param index: Index of Data pqt_sources
-        :return: None
         """
         if index > 0:
             self.data_delete_button.setText('Delete Data: %s' % self.data.pqt_sources[index])
@@ -651,7 +752,6 @@ class Settings(QWidget):
     def delete_data(self):
         """
         Delete data parquet after verification check.
-        :return: None
         """
         index = self.data_delete_selector.currentIndex()
         if index > 0:

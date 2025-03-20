@@ -4,6 +4,7 @@ from copy import deepcopy
 from io import StringIO
 from json import dump, loads, load, dumps, JSONEncoder
 from os import listdir, path, getenv
+from pathlib import Path
 from time import sleep
 from typing import Union
 
@@ -27,16 +28,22 @@ COLORS = ['white', 'red', 'orange', 'blue', 'yellow', 'aqua', 'skyblue', 'slateg
 """
 Base plot map dictionary structure.
 """
-PLOT = {'id': 0, # plot map identifier
-        'title': 'Title of Plot Map', # plot title
-        'color': 'blue', # background color name
-        'data_name': '', # source name of dataframe
-        'graph_name': '', # plot name
-        'x_coord': '', # x column name
-        'y_coord': '', # y column name
-        'z_coord': '', # z column name
-        'dpi': 100, # plot resolution
-        'data': None}  # pandas dataframe or dict of numpy arrays
+PLOT = {'id': 0,                                     # plot map identifier.
+        'title': 'Title of Plot Map',                         # plot title.
+        'color': 'blue',                           # background color name.
+        'graph_name': '',             # plot name reference for Plot_Types.
+        'x_coord': '',                                     # x column name.
+        'y_coord': '',                                     # y column name.
+        'z_coord': '',                                     # z column name.
+        'x_grid': False,                            # show horizontal grid.
+        'y_grid': False,                              # show vertical grid.
+        'dpi': 100,                          # plot font size / resolution.
+        'fit': False,                    # fit plot to window or expandable.
+        'label_all': False,          # show all plot point labels on graph.
+        'horz_stretch': 0, # expand plot horizontally by factor of * / 10.
+        'vert_stretch': 0,   # expand plot vertically by factor of * / 10.
+        'data_name': '',          # source name of dataframe with prefixes.
+        'data': None}           # pandas dataframe or dict of numpy arrays.
 
 def error_func(in_txt, func, *args, **kwargs):
     """
@@ -62,11 +69,11 @@ def resource_path(relative_path: str) -> str:
     """
     try:
         if getattr(sys, 'frozen', False):
-            base_path = sys._MEIPASS + '/resources/modules'
+            base_path = sys._MEIPASS
         else:
-            base_path = path.dirname(path.abspath(__file__))
+            base_path = Path(__file__).parent.parent.parent
     except AttributeError:
-        base_path = path.abspath("../../")
+        base_path = path.abspath("")
     return path.join(base_path, relative_path)
 
 def save_data_as_parquet(source_data, source_name):
@@ -76,7 +83,6 @@ def save_data_as_parquet(source_data, source_name):
      grabs shape if multidimensional and flatten as necessary.
     :param source_data: Primary source data csv.
     :param source_name: Primary source data name.
-    :return:
     """
     metadata = {'shapes': []}
     single_dim = True
@@ -101,26 +107,16 @@ def save_data_as_parquet(source_data, source_name):
 
 def save_plot_map(plot_obj):
     """
-    Takes the plot map from its PlotMap,
-    converts into a JSON format and saves.
+    Takes a copy of plot map from its PlotMap,
+     modifies existing data to JSON format,
+     saves plot map in JSON format.
     :param plot_obj: Instance of PlotMap.
-    :return: None
     """
-    plot = deepcopy(PLOT)
-    plot['id'] = plot_obj.plot_map['id']
-    plot['title'] = plot_obj.plot_map['title']
-    plot['color'] = plot_obj.plot_map['color']
-    plot['data_name'] = plot_obj.plot_map['data_name']
-    plot['data'] = plot_obj.plot_map['data']
-    if plot_obj.plot_map['data'] is not None:
-        plot['data'] = dumps(plot_obj.plot_map['data'], cls=NumpyEncoder)
-    plot['x_coord'] = plot_obj.plot_map['x_coord']
-    plot['y_coord'] = plot_obj.plot_map['y_coord']
-    plot['z_coord'] = plot_obj.plot_map['z_coord']
-    plot['graph_name'] = plot_obj.plot_map['graph_name']
-    plot['dpi'] = plot_obj.plot_map['dpi']
+    plot_map = deepcopy(plot_obj.plot_map)
+    if plot_map['data'] is not None:
+        plot_map['data'] = dumps(plot_map['data'], cls=NumpyEncoder)
     with open('saved/plots/plot_map_%s.json' % plot_obj.plot_map['id'], 'w') as f:
-        dump(str(plot), f, separators=(',', ':'), sort_keys=True, indent=4)
+        dump(str(plot_map), f, separators=(',', ':'), sort_keys=True, indent=4)
 
 def load_plot_maps(main_win, load_all:bool):
     """
@@ -200,7 +196,6 @@ class WaitTimer(QThread):
         Start timer and run for designated delay time.
         Signal prog every 10th of a second.
         Signal fin when countdown complete.
-        :return: None
         """
         while self.delay >= 0:
             self.prog.emit(round(self.delay, 1))

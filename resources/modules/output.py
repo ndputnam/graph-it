@@ -98,7 +98,6 @@ class OutputOptions(QDialog):
         """
         Define output directory to place rendered output.
         will save this location as a reference point for future outputs.
-        :return: None
         """
         output_dir = QFileDialog.getExistingDirectory(self, 'Destination Folder For Outputting Plot', self.output_dir)
         if output_dir:
@@ -109,7 +108,6 @@ class OutputOptions(QDialog):
         """
         Defines output extension format.
         :param index: Index reference for list of available extensions.
-        :return: None
         """
         self.output_format = self.output_formats[index]
 
@@ -121,14 +119,12 @@ class OutputOptions(QDialog):
                 high 1200 dpi - high resolution image.
                 ultra 2000 dpi - highest possible value, rare use case.
         :param index: Index reference for dictionary of levels.
-        :return: None
         """
         self.output_res = self.output_resolutions[index]
 
     def set_output_trans(self):
         """
         Sets whether to give output image a transparent background.
-        :return: None
         """
         self.output_trans = not self.output_trans
         if self.output_trans: self.select_output_trans.setText('Transparent Image')
@@ -138,7 +134,6 @@ class OutputOptions(QDialog):
         """
         Defines boarder padding for output image.
         :param index:
-        :return: None
         """
         self.output_padding = index / 10
         self.output_padding_label.setText('Image Padding: %s"' % self.output_padding)
@@ -147,7 +142,6 @@ class OutputOptions(QDialog):
         """
         Set primary background color of output image.
         :param index: Index reference for color name in COLORS.
-        :return: None
         """
         self.output_color = COLORS[index]
         self.select_output_color.setStyleSheet("QComboBox::editable {background-color: %s;}" % self.output_color)
@@ -157,7 +151,6 @@ class OutputOptions(QDialog):
         Verifies plot data is valid to output.
         Renders and outputs current plot map plot.
         Output extensions: .png, .pdf, .svg, .eps, .ps
-        :return: None
         """
         plot_fig = self.plots[self.tabs.currentIndex()].plot_canvas.fig
         axes = plot_fig.axes
@@ -180,7 +173,6 @@ class OutputOptions(QDialog):
         """
         IN DEVELOPMENT
         Will print out the current PlotMap rendered graph.
-        :return:None
         """
         plot_fig = self.plots[self.tabs.currentIndex()].plot_canvas.canvas.figure
         plot_canvas = self.plots[self.tabs.currentIndex()].plot_canvas
@@ -188,6 +180,10 @@ class OutputOptions(QDialog):
         if axes:
             self.print_button.setText('Print Function\nIn Development')
             try:
+                # print('print testing')
+                # buffer = plot_canvas.canvas.print_to_buffer()
+                # print('buffer: %s' % buffer)
+
                 # win = QDialog(self)
                 # button = QPushButton()
                 # win.printRequested = button.clicked
@@ -228,6 +224,5 @@ class OutputOptions(QDialog):
     def as_csv(self):
         """
         Future, to output data as csv.
-        :return: None
         """
         pass

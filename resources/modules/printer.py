@@ -20,7 +20,6 @@ class Printer(QtCore.QObject):
     def print(self):
         """
         Calls default printer options display.
-        :return: None
         """
         printer = QtPrintSupport.QPrinter(
             QtPrintSupport.QPrinter.PrinterMode.HighResolution)
@@ -32,7 +31,6 @@ class Printer(QtCore.QObject):
     def preview(self):
         """
         Calls default printer preview display.
-        :return: None
         """
         if not self._printing:
             self._printing = True
@@ -48,7 +46,6 @@ class Printer(QtCore.QObject):
         """
         Renders graph to the printer preview.
         :param printer: Printer object.
-        :return: None
         """
         QtWidgets.QApplication.setOverrideCursor(
             QtCore.Qt.CursorShape.WaitCursor)
@@ -60,7 +57,6 @@ class Printer(QtCore.QObject):
         """
         Update if printed successfully.
         :param success: True if printed.
-        :return: None
         """
         if not success:
             painter = QtGui.QPainter()

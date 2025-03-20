@@ -79,7 +79,6 @@ class Data:
         Can be applied to a specific column or to the whole Dataframe.
         :param column: If given, column to limit.
         :param limit: Length to limit to.
-        :return: None
         """
         if column in ['All Columns', '']:
             self.formated_data = self.formated_data.copy().head(limit)

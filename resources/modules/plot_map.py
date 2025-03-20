@@ -1,11 +1,13 @@
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPalette, QColor, QKeySequence
-from PyQt6.QtWidgets import QTableView, QScrollArea, QVBoxLayout, QPushButton, QWidget, QMessageBox, QSplitter
+from PyQt6.QtWidgets import (QTableView, QScrollArea, QVBoxLayout, QPushButton,
+                             QWidget, QMessageBox, QSplitter, QHBoxLayout)
 
 from resources.modules.plot_settings import Settings
 from resources.modules.plotting import PLOT_TYPES, RenderPlot
 from resources.modules.stylesheets import button
 from resources.modules.table import TableModel
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 
 class PlotMap(QWidget):
@@ -37,7 +39,7 @@ class PlotMap(QWidget):
         self.scroll_area = QWidget()
         # TABLE
         table = QScrollArea(self.scroll_area)
-        table.setWidgetResizable(True) #redundant?
+        table.setWidgetResizable(True)
         self.table_data = QTableView()
         QTimer.singleShot(1000, self.table_data.resizeColumnsToContents)
         self.table_model = TableModel
@@ -45,20 +47,31 @@ class PlotMap(QWidget):
             self.table_model = TableModel(self.plot_map['data'])
             self.table_data.setModel(self.table_model)
         self.table_data.verticalHeader().setVisible(False)
-        self.table_data.resize(self.table_data.size()) # redundant?
         table.setWidget(self.table_data)
         # PLOT CANVAS
-        self.canvas = QScrollArea()
+        self.canvas_scroll_area = QScrollArea()
+        self.canvas_scroll_area.resize(800, 400)
         self.plot_canvas = RenderPlot(self)
         self.plot_canvas.prog.connect(self.plot_loading_prog)
         self.plot_canvas.fin.connect(self.plot_loaded)
-        self.canvas.setWidget(self.plot_canvas)
+        self.canvas_scroll_area.setWidget(self.plot_canvas)
+        # TOOLBAR
+        self.toolbar = NavigationToolbar(self.plot_canvas.canvas, self)
+        self.toolbar.setStyleSheet("background-color: black;")
+        self.toolbar.setOrientation(Qt.Orientation.Vertical)
+        self.toolbar.setFixedWidth(25)
+        # CANVAS TOOLBAR LAYOUT
+        canvas_area = QWidget()
+        can_layout = QHBoxLayout()
+        can_layout.addWidget(self.toolbar)
+        can_layout.addWidget(self.canvas_scroll_area)
+        canvas_area.setLayout(can_layout)
         # SETTINGS
         self.settings = Settings(self)
         # SPLITTER
         splitter = QSplitter(Qt.Orientation.Vertical)
         splitter.addWidget(table)
-        splitter.addWidget(self.canvas)
+        splitter.addWidget(canvas_area)
         # SET LAYOUT
         layout = QVBoxLayout()
         layout.addWidget(self.run_plot_button)
@@ -71,15 +84,13 @@ class PlotMap(QWidget):
         Shows: The current graph to be rendered.
                The current plot map name.
                The plot map id.
-        :return: None
         """
-        self.run_plot_button.setText('RUN PLOT: %s     ON: %s     PLOT ID: %s'
+        self.run_plot_button.setText('DRAW PLOT: %s     ON: %s     PLOT ID: %s'
             % (self.plot_map['graph_name'], self.plot_map['title'], self.plot_map['id']))
 
     def set_bg_color(self):
         """
         Sets background color from plot map color
-        :return: None
         """
         palette = self.palette()
         palette.setColor(QPalette.ColorRole.Window, QColor(self.plot_map['color']))
@@ -90,7 +101,6 @@ class PlotMap(QWidget):
         Get updated plot map when being saved in settings.
         Sets run plot button to default value.
         :param plot_map:
-        :return: None
         """
         self.plot_map = plot_map
         self.reset_run_plot_button_title()
@@ -101,7 +111,6 @@ class PlotMap(QWidget):
         Updates run plot button with relevant information,
          obtained during plot rendering.
         :param prog:
-        :return: None
         """
         self.run_plot_button.setText(prog)
 
@@ -109,7 +118,6 @@ class PlotMap(QWidget):
         """
         Callback connection to RenderPlot.
         Sets run plot button to default value once plot is rendered
-        :return: None
         """
         if self.main_win.isEnabled():
             self.reset_run_plot_button_title()
@@ -135,7 +143,6 @@ class PlotMap(QWidget):
         Render plot if necessary parameters are set.
         Otherwise, open settings window,
          or request parameterise get set if settings is open.
-        :return: None
         """
         if self.validate_data():
             self.run_plot_button.setText(' < < < RENDERING PLOT > > > ')
