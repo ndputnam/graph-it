@@ -119,18 +119,14 @@ class Settings(QWidget):
         h_value = self.plot_map['horz_stretch']
         self.horz_stretch_label = QLabel('Horz Stretch: %s' % (h_value / 10) if h_value > 0 else 'Auto-Scaling')
         self.horz_stretch = QSlider(Qt.Orientation.Horizontal)
-        self.horz_stretch.setRange(0, 100)
-        self.horz_stretch.setTickInterval(1)
-        # self.horz_stretch.setValue(-1)
+        self.horz_stretch.setRange(0, 50)
         self.horz_stretch.valueChanged.connect(self.set_horz_stretch)
         self.horz_stretch.mouseReleaseEvent = self.mouseReleaseEvent
         # STRETCH VERTICAL
         v_value = self.plot_map['vert_stretch']
         self.vert_stretch_label = QLabel('Vert Stretch:   %s' % (v_value / 10) if v_value > 0 else 'Auto-Scaling')
         self.vert_stretch = QSlider(Qt.Orientation.Horizontal)
-        self.vert_stretch.setRange(0, 100)
-        self.vert_stretch.setTickInterval(1)
-        # self.vert_stretch.setValue(-1)
+        self.vert_stretch.setRange(0, 50)
         self.vert_stretch.valueChanged.connect(self.set_vert_stretch)
         self.vert_stretch.mouseReleaseEvent = self.mouseReleaseEvent
 
@@ -675,7 +671,7 @@ class Settings(QWidget):
         Uses call to mouseReleaseEvent to update RenderPlot and set value to plot map.
         :param value: Multiplier applied to current plot display width.
         """
-        self.horz_stretch_label.setText('Horz Stretch: %s' % (value / 10) if value > 0 else 'Auto-Scaling')
+        self.horz_stretch_label.setText('Horz Stretch: %s' % value if value > 0 else 'Auto-Scaling')
         self.plot_map_obj.run_plot_button.setText(' < < < RENDERING PLOT > > > ')
 
     def set_vert_stretch(self, value):
@@ -684,7 +680,7 @@ class Settings(QWidget):
         Uses call to mouseReleaseEvent to update RenderPlot and set value to plot map.
         :param value: Multiplier applied to current plot display height.
         """
-        self.vert_stretch_label.setText('Vert Stretch:   %s' % (value / 10) if value > 0 else 'Auto-Scaling')
+        self.vert_stretch_label.setText('Vert Stretch:   %s' % value if value > 0 else 'Auto-Scaling')
         self.plot_map_obj.run_plot_button.setText(' < < < RENDERING PLOT > > > ')
 
     def open_preview_table(self):

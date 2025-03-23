@@ -284,8 +284,7 @@ class UpdateSources(QThread):
         loc_error = []
         for source_name in listdir('saved/sources'):
             try:
-                is_example = source_name in listdir(resource_path('resources/example_data_sources'))
-                if self.main_window.spec['sources'][source_name] and not is_example:
+                if self.main_window.spec['sources'][source_name]:
                     source_file_path = self.main_window.spec['sources'][source_name][0]
                     copyfile(source_file_path, Path('saved/sources/' + source_name).absolute())
                     self.data_sources.append(source_name)

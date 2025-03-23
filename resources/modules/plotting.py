@@ -1,8 +1,8 @@
-import matplotlib
+
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSlider
-from matplotlib import ticker
+from matplotlib import ticker, rcParams
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -35,8 +35,8 @@ PLOT_TYPES = {'Standard Plot': ('self._ax.plot(self.x_data, self.y_data, ".", co
                                ' self._ax.bar3d(xpos.ravel(), ypos.ravel(), 0, 0.5 * np.ones_like(0),'
                                ' 0.5 * np.ones_like(0), hist.ravel(), zsort="average")', ('x', 'y')), # done
               'Stem Plot': ('self._ax.stem(self.x_data, self.y_data)', ('x', 'y')), # done
-              'Fill Plot (no go)': ('self._ax.fill_between(x1, y1, y2, alpha=.5, linewidth=0);'
-                                    ' self._ax.plot(x, (y1 + y2) / 2, linewidth=2)', ('x', 'y')), # LOOK AT IN DETAIL
+              # 'Fill Plot (no go)': ('self._ax.fill_between(x1, y1, y2, alpha=.5, linewidth=0);'
+              #                       ' self._ax.plot(x, (y1 + y2) / 2, linewidth=2)', ('x', 'y')), # LOOK AT IN DETAIL
               'Stack Plot': ('self._ax.stackplot(self.x_data, self.y_data)', ('x', 'y')), # done
               'Stair Plot': ('self._ax.stairs(self.y_data, linewidth=2, fill=True)', 'y'), # done
               'Hist Plot': ('self._ax.hist(self.x_data, bins=10, linewidth=0.5, edgecolor="white")', 'x'), # done
@@ -48,14 +48,14 @@ PLOT_TYPES = {'Standard Plot': ('self._ax.plot(self.x_data, self.y_data, ".", co
               'Hex Bin Plot': ('self._ax.hexbin(self.x_data, self.y_data)', ('x', 'y')), # done
               'Pie Plot': ('self._ax.pie(np.array(self.x_data))', 'x'), # done ... try with 2d array?
               'ECDF Plot': ('self._ax.ecdf(self.x_data)', 'x'), # done
-              'Img Show Plot (no go)': ('self._ax.imshow(np.array(self.x_data))', 'x'), # NEED NP ARRAY LIKE OR PIL image,
+              # 'Img Show Plot (no go)': ('self._ax.imshow(np.array(self.x_data))', 'x'), # NEED NP ARRAY LIKE OR PIL image,
               # likely need =< 2d, invalid shape
-              'Color Mesh Plot (no go)': ('self._ax.pcolormesh(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # NEED ARRAY
-              'Contour Plot (no go)': ('self._ax.contour(self.x_data, self.y_data)', ('x', 'y')), # need array, z must be 2d
-              'Contour Fill Plot (no go)': ('self._ax.contourf(self.x_data, self.y_data)', ('x', 'y')), # need array, z must be 2d
+              # 'Color Mesh Plot (no go)': ('self._ax.pcolormesh(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # NEED ARRAY
+              # 'Contour Plot (no go)': ('self._ax.contour(self.x_data, self.y_data)', ('x', 'y')), # need array, z must be 2d
+              # 'Contour Fill Plot (no go)': ('self._ax.contourf(self.x_data, self.y_data)', ('x', 'y')), # need array, z must be 2d
               'Barb Plot': ('self._ax.barbs(self.x_data, self.y_data)', ('x', 'y')), # done
               'Quiver Plot': ('self._ax.quiver(self.x_data, self.y_data)', ('x', 'y')), # done
-              'Stream Plot (no go)': ('self._ax.streamplot(self.x_data, self.y_data)', ('x', 'y')), # missing args u and v
+              # 'Stream Plot (no go)': ('self._ax.streamplot(self.x_data, self.y_data)', ('x', 'y')), # missing args u and v
               'Tri Contour Plot': ('self._ax.plot(self.x_data, self.y_data, "o", markersize=2, color="lightgrey");'
                                    ' self._ax.tricontour(self.x_data, self.y_data, self.z_data,'
                                    ' levels=np.linspace(self.z_data[self.z_data.idxmin()], self.z_data[self.z_data.idxmax()], 7))',
@@ -74,14 +74,15 @@ PLOT_TYPES = {'Standard Plot': ('self._ax.plot(self.x_data, self.y_data, ".", co
               'Iso Surface Highlight Plot': ('self._ax.plot_surface(self.x_data, self.y_data, self.z_data,'
                                              ' rstride=1, cstride=1, cmap="viridis", edgecolor="none")',
                                              ('x', 'y', 'z')), # done
-              'Iso Fill Plot (no go)': ('self._ax.fill_between(x1, y1, z1, x2, y2, z2, alpha=0.5);'
-                                ' self._ax.plot(x1, y1, z1); ax.plot(x2, y2, z2)', ('x', 'y', 'z')),# LOOK AT IN DETAIL
+              # 'Iso Fill Plot (no go)': ('self._ax.fill_between(x1, y1, z1, x2, y2, z2, alpha=0.5);'
+              #                   ' self._ax.plot(x1, y1, z1); ax.plot(x2, y2, z2)', ('x', 'y', 'z')),# LOOK AT IN DETAIL
               'Iso Standard Plot': ('self._ax.plot(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # done
-              'Iso Quiver Plot (no go)': ('self._ax.quiver(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # missing u, v, w
+              # 'Iso Quiver Plot (no go)': ('self._ax.quiver(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # missing u, v, w
               'Iso Scatter Plot': ('self._ax.scatter(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # done
-              'Iso Stem Plot (no go)': ('self._ax.stem(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # CRASHES, no info!!!
-              'Iso Voxel Plot (no go)': ('self._ax.voxels(voxelarray)', ('x', 'y', 'z')),  # NEED TO LOOK AT IN DETAIL
-              'Dynamic Plot (no go)': ('dynamic()', ('x', 'y'))} # NEED TO CREATE
+              }
+              # 'Iso Stem Plot (no go)': ('self._ax.stem(self.x_data, self.y_data, self.z_data)', ('x', 'y', 'z')), # CRASHES, no info!!!
+              # 'Iso Voxel Plot (no go)': ('self._ax.voxels(voxelarray)', ('x', 'y', 'z')),  # NEED TO LOOK AT IN DETAIL
+              # 'Dynamic Plot (no go)': ('dynamic()', ('x', 'y'))} # NEED TO CREATE
 
 
 def dynamic():
@@ -117,10 +118,13 @@ class RenderPlot(QWidget):
         # FIGURE CANVAS
         self.fig = Figure(dpi=100, layout='tight')
         self.canvas = FigureCanvas(self.fig)
+        self._ax = self.canvas.figure.add_subplot()
+        self.watermark = [self._ax.text(0.5, 0.5, 'Graph-It', transform=self._ax.transAxes, fontsize=40,
+                                       color='gray', alpha=0.5, ha='center', va='center', rotation=0), ]
         # MOUSE CLICK EVENT
         self.fig.canvas.mpl_connect("button_release_event", self.on_click)
-        # AXIS ROTATION STYLE
-        matplotlib.rcParams['axes3d.mouserotationstyle'] = 'sphere'
+        # ROTATION STYLE
+        rcParams['axes3d.mouserotationstyle'] = 'sphere'
         # ELEVATION SLIDER
         self.slider_elev_label = QLabel("Elev\n %s" % 30)
         self.slider_elev = QSlider( orientation=Qt.Orientation.Vertical)
@@ -146,6 +150,39 @@ class RenderPlot(QWidget):
         self.main_layout = QHBoxLayout(self)
         self.reset_layout()
 
+    def add_watermark(self, width:int, height:int):
+        """
+        Applies a watermark, adjusting for plot shape.
+        :param width: Plot canvas width.
+        :param height: Plot canvas height.
+        """
+        [mark.set_visible(False) for mark in self.watermark]
+        canvas_aspect_ratio = max(width, height) / min(width, height)
+        text_aspect_ratio = 4.24868
+        rotation = 45
+        if text_aspect_ratio < canvas_aspect_ratio:
+            text_size = min(width, height)
+            rotation = 0 if width >= height else 90
+        elif self.x_label_size + self.y_label_size > 0:
+            text_size = (self.x_label_size if width >= height else self.y_label_size)
+        else:
+            text_size = min(width, height)
+        text_fit = max(width, height) // (text_size if rotation == 45 else text_size * 1.5)
+        text_size = text_size / text_aspect_ratio / 1.34513
+        color = 'grey' if self.plot_map_obj.plot_map['color'] != 'slategrey' else 'white'
+        spacing = (1 / text_fit) / 2
+        if self.iso:
+            self.watermark = [self._ax.text2D(spacing if width >= height else 0.5, 0.5 if width >= height else spacing,
+                                              'Graph-It', transform=self._ax.transAxes, fontsize=text_size,
+                                              color=color, alpha=0.5, ha='center', va='center', rotation=rotation)]
+        else:
+            for w in range(int(text_fit)):
+                watermark = self._ax.text(spacing if width >= height else 0.5, 0.5 if width >= height else spacing,
+                                          'Graph-It', transform=self._ax.transAxes, fontsize=text_size,
+                                          color=color, alpha=0.5, ha='center', va='center', rotation=rotation)
+                self.watermark.append(watermark)
+                spacing += 1 / text_fit
+
     def run(self):
         """
         Renders plot data from the plot map with the specified graph.
@@ -155,27 +192,32 @@ class RenderPlot(QWidget):
         self.x_label_size = 0
         self.y_label_size = 0
         self.define_column_data()
+        graph_name = self.plot_map_obj.plot_map['graph_name']
         try:
             self.set_config()
-            exec(PLOT_TYPES[self.plot_map_obj.plot_map['graph_name']][0])
+            exec(PLOT_TYPES[graph_name][0])
             self.structure_plot()
             self.canvas.draw()
             if self.x_label_size + self.y_label_size > 0:
                 self.structure_plot()
                 self.canvas.draw()
         except (TypeError, KeyError, NameError, ValueError) as e:
-            self.plot_error(e)
+            self.plot_error(graph_name, e)
         self.fin.emit()
 
-    def plot_error(self, error):
+    def plot_error(self, graph_name:str, error:str):
         """
         Output a plot with the error created from a failed attempt at rendering.
+        :param graph_name: name of graph trying to plot.
         :param error: error details.
         """
         self.fig.clf()
+        rcParams['xtick.color'] = 'black'
+        rcParams['ytick.color'] = 'black'
         self._ax = self.fig.add_subplot()
-        self._ax.set_title('GRAPH DATA APPLIED IS NOT VALID FOR THIS PLOTTING FORMAT.')
-        self._ax.text(.02, .8, '%s' % error, wrap=True)
+        self._ax.set_title('GRAPH DATA APPLIED IS NOT VALID FOR "%s" FORMAT.' % graph_name)
+        self._ax.text(.02, .8, 'ERROR CALLED:\n%s' % error, wrap=True)
+        self._ax.set_facecolor('black')
         self.canvas.draw()
 
     def define_column_data(self):
@@ -195,22 +237,26 @@ class RenderPlot(QWidget):
         Set the layout to match the style being called for.
         Set the labels respective to the plot map data being applied.
         """
-        graph_type = self.plot_map_obj.plot_map['graph_name'][:3]
-        if graph_type in ['Iso', 'Tri', '3-D']:
-            self.iso = True
-            self.reset_layout()
-            self._ax = self.canvas.figure.add_subplot(projection="3d")
-            if graph_type != '3-D': self._ax.set_zlabel(self.plot_map_obj.plot_map['z_coord'])
-        else:
-            self.iso = False
-            self.reset_layout()
-            self._ax = self.canvas.figure.add_subplot()
-        self._ax.set_title(self.plot_map_obj.plot_map['title'] + ' ' + self.plot_map_obj.plot_map['graph_name'])
-        if self.plot_map_obj.plot_map['x_coord']:
-            self._ax.set_xlabel(self.plot_map_obj.plot_map['x_coord'])
-        if self.plot_map_obj.plot_map['y_coord']:
-            self._ax.set_ylabel(self.plot_map_obj.plot_map['y_coord'])
+        plot_map = self.plot_map_obj.plot_map
+        graph_type = plot_map['graph_name'][:3]
+        self.iso = True if graph_type in ['Iso', 'Tri', '3-D'] else False
+        self.reset_layout()
+        neg_color = 'black' if plot_map['color'] in ['white', 'yellow', 'aqua', 'lightgrey', 'tan'] else 'white'
+        pos_color = neg_color if self.iso else 'white'
+        rcParams['text.color'] = pos_color
+        rcParams['axes.labelcolor'] = pos_color
+        rcParams['lines.color'] = neg_color
+        rcParams['lines.markerfacecolor'] = neg_color
+        rcParams['xtick.color'] = pos_color
+        rcParams['ytick.color'] = pos_color
+        self._ax = self.canvas.figure.add_subplot(projection="3d") if self.iso else self.canvas.figure.add_subplot()
+        self._ax.set_title(self.plot_map_obj.plot_map['title'] + ' ' + plot_map['graph_name'])
+        if plot_map['x_coord']: self._ax.set_xlabel(plot_map['x_coord'])
+        if plot_map['y_coord']: self._ax.set_ylabel(plot_map['y_coord'])
+        if self.iso and graph_type != '3-D': self._ax.set_zlabel(plot_map['z_coord'])
         self.fig.autofmt_xdate(rotation=90, ha='center')
+        self.fig.set_facecolor((0,0,0))
+        self._ax.set_facecolor(plot_map['color'])
 
     def structure_plot(self):
         """
@@ -256,10 +302,11 @@ class RenderPlot(QWidget):
         scroll_area_size = self.plot_map_obj.canvas_scroll_area.size()
         dpi = self.plot_map_obj.plot_map['dpi']
         self.canvas.figure.set_dpi(dpi)
-        x_inch = int((scroll_area_size.width() - 2) * horz_stretch)
-        y_inch = int((scroll_area_size.height() - 2) * vert_stretch)
-        self.canvas.figure.set_size_inches((x_inch - 20) / dpi, (y_inch - 20) / dpi)
-        self.setFixedSize(x_inch, y_inch)
+        width = int((scroll_area_size.width() - 2) * horz_stretch)
+        height = int((scroll_area_size.height() - 2) * vert_stretch)
+        self.canvas.figure.set_size_inches((width - 20) / dpi, (height - 20) / dpi)
+        self.setFixedSize(width, height)
+        self.add_watermark(width, height)
 
     def set_horz_stretch(self, canvas_width:float) -> float:
         """
@@ -268,7 +315,7 @@ class RenderPlot(QWidget):
         :return: horizontal stretch.
         """
         if self.plot_map_obj.plot_map['horz_stretch'] > 0:
-            return self.plot_map_obj.plot_map['horz_stretch'] / 10
+            return self.plot_map_obj.plot_map['horz_stretch']
         if self.x_label_size == 0 or self.plot_map_obj.plot_map['fit'] and self.iso:
             return 1
         return self.x_label_size / canvas_width
@@ -280,7 +327,7 @@ class RenderPlot(QWidget):
         :return: vertical stretch.
         """
         if self.plot_map_obj.plot_map['vert_stretch'] > 0:
-            return self.plot_map_obj.plot_map['vert_stretch'] / 10
+            return self.plot_map_obj.plot_map['vert_stretch']
         if self.plot_map_obj.plot_map['fit'] and self.iso or self.y_label_size == 0:
             return 1
         return self.y_label_size / canvas_height
@@ -292,12 +339,19 @@ class RenderPlot(QWidget):
          redraws the plot if label sizes are > 0,
          sets which ticks are affected based on plot map parameters.
         """
-        if not self.iso:
-            minor = not self.plot_map_obj.plot_map['label_all'] or self.plot_map_obj.plot_map['fit']
-            if self.plot_map_obj.plot_map['horz_stretch'] == 0:
-                self.x_label_size = sum(t.get_fontsize() * (self.fig.dpi / 72) for t in self._ax.get_xticklabels(minor))
+        if not self.iso and not self.plot_map_obj.plot_map['fit']:
+            renderer = self.canvas.get_renderer()
+            plot_title_height = 50
+            x_title = 50
+            y_title = 50
             if self.plot_map_obj.plot_map['vert_stretch'] == 0:
-                self.y_label_size = sum(t.get_fontsize() * (self.fig.dpi / 72) for t in self._ax.get_yticklabels(minor))
+                y_label_size = sum([t.get_window_extent(renderer=renderer).height for t in self._ax.get_yticklabels()])
+                x_text_length = max([t.get_window_extent(renderer=renderer).height for t in self._ax.get_xticklabels()])
+                self.y_label_size = y_label_size + x_text_length + x_title + plot_title_height
+            if self.plot_map_obj.plot_map['horz_stretch'] == 0:
+                x_label_size = sum([t.get_window_extent(renderer=renderer).width for t in self._ax.get_xticklabels()])
+                y_text_length = max([t.get_window_extent(renderer=renderer).width for t in self._ax.get_yticklabels()])
+                self.x_label_size = x_label_size + y_text_length + y_title
 
     def on_click(self, event):
         """
