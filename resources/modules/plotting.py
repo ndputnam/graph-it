@@ -170,12 +170,11 @@ class RenderPlot(QWidget):
         text_fit = max(width, height) // (text_size if rotation == 45 else text_size * 1.5)
         text_size = text_size / text_aspect_ratio / 1.34513
         color = 'grey' if self.plot_map_obj.plot_map['color'] != 'slategrey' else 'white'
-        spacing = (1 / text_fit) / 2
         if self.iso:
-            self.watermark = [self._ax.text2D(spacing if width >= height else 0.5, 0.5 if width >= height else spacing,
-                                              'Graph-It', transform=self._ax.transAxes, fontsize=text_size,
+            self.watermark = [self._ax.text2D(0.5, 0.5, 'Graph-It', transform=self._ax.transAxes, fontsize=text_size,
                                               color=color, alpha=0.5, ha='center', va='center', rotation=rotation)]
         else:
+            spacing = (1 / text_fit) / 2
             for w in range(int(text_fit)):
                 watermark = self._ax.text(spacing if width >= height else 0.5, 0.5 if width >= height else spacing,
                                           'Graph-It', transform=self._ax.transAxes, fontsize=text_size,

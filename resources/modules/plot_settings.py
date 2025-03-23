@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QColor
-from PyQt6.QtWidgets import (QLabel, QLineEdit, QComboBox, QPushButton, QGridLayout,QWidget, QDial,
+from PyQt6.QtWidgets import (QLabel, QLineEdit, QComboBox, QPushButton, QGridLayout, QWidget, QDial,
                              QFrame, QMessageBox, QVBoxLayout, QTableView, QDialog, QCheckBox, QSlider)
 from pandas import DataFrame
 

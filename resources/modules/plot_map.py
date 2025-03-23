@@ -2,12 +2,12 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPalette, QColor, QKeySequence
 from PyQt6.QtWidgets import (QTableView, QScrollArea, QVBoxLayout, QPushButton,
                              QWidget, QMessageBox, QSplitter, QHBoxLayout)
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from resources.modules.plot_settings import Settings
 from resources.modules.plotting import PLOT_TYPES, RenderPlot
 from resources.modules.stylesheets import button
 from resources.modules.table import TableModel
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 
 class PlotMap(QWidget):
